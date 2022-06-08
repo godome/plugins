@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/godome/godome/pkg/config"
 	"github.com/godome/godome/pkg/exposure"
 	"github.com/godome/godome/pkg/logger"
 	"github.com/godome/godome/pkg/module"
@@ -23,6 +24,7 @@ type FiberExposure interface {
 
 type fiberExposure struct {
 	modules      map[string]module.Module
+	config       config.Config
 	exposureType exposure.ExposureType
 	port         string
 	app          *fiber.App
@@ -35,6 +37,7 @@ func NewFiberExposure(port string) FiberExposure {
 
 	return &fiberExposure{
 		modules:      make(map[string]module.Module),
+		config:       config.NewConfig(),
 		exposureType: ExposureType,
 		port:         port,
 		app:          app,
@@ -97,6 +100,14 @@ func (r *fiberExposure) Test(req *http.Request, msTimeout ...int) (resp *http.Re
 
 func (r *fiberExposure) GetType() exposure.ExposureType {
 	return r.exposureType
+}
+
+func (r *fiberExposure) Logger() logger.Logger {
+	return logger.GetLogger()
+}
+
+func (r *fiberExposure) Config() config.Config {
+	return r.config
 }
 
 func (r *fiberExposure) ExposeModule(module module.Module) FiberExposure {
