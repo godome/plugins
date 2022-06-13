@@ -20,6 +20,7 @@ type FiberExposure interface {
 	ExposeModule(module module.Module) FiberExposure
 	Run() error
 	Test(req *http.Request, msTimeout ...int) (resp *http.Response, err error)
+	loadRoutes() error
 }
 
 type fiberExposure struct {
@@ -58,20 +59,7 @@ func (r *fiberExposure) Run() error {
 	}()
 
 	// Load Routes
-	for _, module := range r.modules {
-		provider := module.GetProvider(ProviderType)
-		if provider == nil {
-			logger.Debug("FiberHandler provider not found on module: %s \n", module.GetName())
-			continue
-		}
-
-		foundFiberHandler, ok := provider.(FiberHandler)
-		if !ok {
-			return fmt.Errorf("FiberHandler provider could not been casted on module: %s", module.GetName())
-		}
-
-		foundFiberHandler.LoadRoutes(r.app)
-	}
+	r.loadRoutes()
 
 	// Startup message
 	// startupMessage := fmt.Sprint(
@@ -95,6 +83,8 @@ func (r *fiberExposure) Run() error {
 }
 
 func (r *fiberExposure) Test(req *http.Request, msTimeout ...int) (resp *http.Response, err error) {
+	// Load Routes
+	r.loadRoutes()
 	return r.app.Test(req, msTimeout...)
 }
 
@@ -113,4 +103,20 @@ func (r *fiberExposure) Config() config.Config {
 func (r *fiberExposure) ExposeModule(module module.Module) FiberExposure {
 	r.modules[module.GetName()] = module
 	return r
+}
+
+func (r *fiberExposure) loadRoutes() error {
+	for _, module := range r.modules {
+		provider := module.GetProvider(ProviderType)
+		if provider == nil {
+			logger.Debug("FiberHandler provider not found on module: %s \n", module.GetName())
+			continue
+		}
+		foundFiberHandler, ok := provider.(FiberHandler)
+		if !ok {
+			return fmt.Errorf("FiberHandler provider could not been casted on module: %s", module.GetName())
+		}
+		foundFiberHandler.LoadRoutes(r.app)
+	}
+	return nil
 }
