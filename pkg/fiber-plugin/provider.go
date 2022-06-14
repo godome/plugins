@@ -1,4 +1,4 @@
-package fiber
+package fiberPlugin
 
 import (
 	"github.com/godome/godome/pkg/component/provider"
