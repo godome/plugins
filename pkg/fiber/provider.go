@@ -10,25 +10,24 @@ const ProviderName = "FiberHandler"
 
 type FiberHandler interface {
 	provider.Provider
-	AddRoute(func(*fiber.App))
+	AddRoute(func(*fiber.App)) FiberHandler
 	LoadRoutes(*fiber.App)
 }
 
 func NewFiberHandler(m module.Module) FiberHandler {
 	return &fiberHandler{
 		Provider: provider.NewProvider(ProviderName),
-		module:   m,
 	}
 }
 
 type fiberHandler struct {
 	provider.Provider
 	routes []func(*fiber.App)
-	module module.Module
 }
 
-func (r *fiberHandler) AddRoute(newRoute func(*fiber.App)) {
+func (r *fiberHandler) AddRoute(newRoute func(*fiber.App)) FiberHandler {
 	r.routes = append(r.routes, newRoute)
+	return r
 }
 
 func (r *fiberHandler) LoadRoutes(app *fiber.App) {
