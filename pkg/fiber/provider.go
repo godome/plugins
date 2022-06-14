@@ -1,7 +1,6 @@
 package fiber
 
 import (
-	"github.com/godome/godome/pkg/component/module"
 	"github.com/godome/godome/pkg/component/provider"
 	"github.com/gofiber/fiber/v2"
 )
@@ -14,7 +13,7 @@ type FiberHandler interface {
 	LoadRoutes(*fiber.App)
 }
 
-func NewFiberHandler(m module.Module) FiberHandler {
+func NewFiberHandler() FiberHandler {
 	return &fiberHandler{
 		Provider: provider.NewProvider(ProviderName),
 	}
