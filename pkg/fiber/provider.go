@@ -1,12 +1,12 @@
 package fiber
 
 import (
-	"github.com/godome/godome/pkg/module"
-	"github.com/godome/godome/pkg/provider"
+	"github.com/godome/godome/pkg/component/module"
+	"github.com/godome/godome/pkg/component/provider"
 	"github.com/gofiber/fiber/v2"
 )
 
-const ProviderType provider.ProviderType = "FiberHandler"
+const ProviderName = "FiberHandler"
 
 type FiberHandler interface {
 	provider.Provider
@@ -14,21 +14,17 @@ type FiberHandler interface {
 	LoadRoutes(*fiber.App)
 }
 
-type fiberHandler struct {
-	routes       []func(*fiber.App)
-	module       module.Module
-	providerType provider.ProviderType
-}
-
 func NewFiberHandler(m module.Module) FiberHandler {
 	return &fiberHandler{
-		module:       m,
-		providerType: ProviderType,
+		Provider: provider.NewProvider(ProviderName),
+		module:   m,
 	}
 }
 
-func (r *fiberHandler) GetType() provider.ProviderType {
-	return r.providerType
+type fiberHandler struct {
+	provider.Provider
+	routes []func(*fiber.App)
+	module module.Module
 }
 
 func (r *fiberHandler) AddRoute(newRoute func(*fiber.App)) {

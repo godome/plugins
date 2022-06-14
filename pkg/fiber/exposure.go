@@ -6,14 +6,13 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/godome/godome/pkg/config"
-	"github.com/godome/godome/pkg/exposure"
+	"github.com/godome/godome/pkg/component/exposure"
+	"github.com/godome/godome/pkg/component/module"
 	"github.com/godome/godome/pkg/logger"
-	"github.com/godome/godome/pkg/module"
 	"github.com/gofiber/fiber/v2"
 )
 
-const ExposureType exposure.ExposureType = "FiberExposure"
+const ExposureName = "FiberExposure"
 
 type FiberExposure interface {
 	exposure.Exposure
@@ -24,24 +23,25 @@ type FiberExposure interface {
 }
 
 type fiberExposure struct {
-	modules      map[string]module.Module
-	config       config.Config
-	exposureType exposure.ExposureType
-	port         string
-	app          *fiber.App
+	exposure.Exposure
+	modules map[string]module.Module
+	port    string
+	app     *fiber.App
 }
 
-func NewFiberExposure(port string) FiberExposure {
-	app := fiber.New(fiber.Config{
-		// DisableStartupMessage: true,
-	})
+func NewFiberExposure(port string, config *fiber.Config) FiberExposure {
+	fiberConfig := fiber.Config{}
+	if config != nil {
+		fiberConfig = *config
+	}
+
+	app := fiber.New(fiberConfig)
 
 	return &fiberExposure{
-		modules:      make(map[string]module.Module),
-		config:       config.NewConfig(),
-		exposureType: ExposureType,
-		port:         port,
-		app:          app,
+		Exposure: exposure.NewExposure(ExposureName),
+		modules:  make(map[string]module.Module),
+		port:     port,
+		app:      app,
 	}
 }
 
@@ -88,33 +88,21 @@ func (r *fiberExposure) Test(req *http.Request, msTimeout ...int) (resp *http.Re
 	return r.app.Test(req, msTimeout...)
 }
 
-func (r *fiberExposure) GetType() exposure.ExposureType {
-	return r.exposureType
-}
-
-func (r *fiberExposure) Logger() logger.Logger {
-	return logger.GetLogger()
-}
-
-func (r *fiberExposure) Config() config.Config {
-	return r.config
-}
-
 func (r *fiberExposure) ExposeModule(module module.Module) FiberExposure {
-	r.modules[module.GetName()] = module
+	r.modules[module.Metadata().GetName()] = module
 	return r
 }
 
 func (r *fiberExposure) loadRoutes() error {
 	for _, module := range r.modules {
-		provider := module.GetProvider(ProviderType)
+		provider := module.GetProvider(ProviderName)
 		if provider == nil {
-			logger.Debug("FiberHandler provider not found on module: %s \n", module.GetName())
+			logger.Debug("FiberHandler provider not found on module: %s \n", module.Metadata().GetName())
 			continue
 		}
 		foundFiberHandler, ok := provider.(FiberHandler)
 		if !ok {
-			return fmt.Errorf("FiberHandler provider could not been casted on module: %s", module.GetName())
+			return fmt.Errorf("FiberHandler provider could not been casted on module: %s", module.Metadata().GetName())
 		}
 		foundFiberHandler.LoadRoutes(r.app)
 	}

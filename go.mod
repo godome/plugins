@@ -3,7 +3,7 @@ module github.com/godome/plugins
 go 1.17
 
 require (
-	github.com/godome/godome v0.0.0-20220603123319-2affa0fb0bb0
+	github.com/godome/godome v0.0.0-20220614102531-83a7057bd096
 	github.com/gofiber/fiber/v2 v2.34.0
 	go.mongodb.org/mongo-driver v1.9.1
 )
